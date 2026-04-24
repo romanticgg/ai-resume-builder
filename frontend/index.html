@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>应届生智能简历生成与优化系统</title>
+    <style>
+        body {
+            font-family: Arial, "Microsoft YaHei", sans-serif;
+            max-width: 1000px;
+            margin: 30px auto;
+            padding: 20px;
+            background: #f5f7fb;
+            color: #333;
+        }
+        h1 {
+            text-align: center;
+        }
+        .section {
+            background: white;
+            padding: 18px;
+            margin-bottom: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+        .section h2 {
+            margin-top: 0;
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0 14px 0;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 14px;
+            background: white;
+        }
+        textarea {
+            min-height: 90px;
+            resize: vertical;
+        }
+        input[readonly] {
+            background: #f3f4f6;
+            color: #555;
+        }
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            background: #2563eb;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #1d4ed8;
+        }
+        #result {
+            white-space: pre-wrap;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            line-height: 1.7;
+        }
+    </style>
+</head>
+<body>
+    <h1>应届生智能简历生成与优化系统</h1>
+
+    <div class="section">
+        <h2>基本信息</h2>
+        <input id="name" placeholder="姓名">
+
+        <select id="gender">
+            <option value="">请选择性别</option>
+            <option value="男">男</option>
+            <option value="女">女</option>
+            <option value="不便透露">不便透露</option>
+        </select>
+
+        <input id="birth_month" type="month" onchange="calculateAge()">
+        <input id="age" placeholder="年龄将自动计算" readonly>
+
+        <input id="phone" placeholder="电话">
+        <input id="email" placeholder="邮箱">
+    </div>
+
+    <div class="section">
+        <h2>求职意向</h2>
+
+        <select id="industry">
+            <option value="">请选择目标行业</option>
+            <option value="互联网">互联网</option>
+            <option value="金融">金融</option>
+            <option value="教育">教育</option>
+            <option value="制造">制造</option>
+            <option value="交通">交通</option>
+            <option value="能源">能源</option>
+            <option value="医疗">医疗</option>
+            <option value="传媒">传媒</option>
+            <option value="政府/事业单位">政府/事业单位</option>
+            <option value="文化旅游">文化旅游</option>
+            <option value="房地产">房地产</option>
+            <option value="咨询服务">咨询服务</option>
+            <option value="其他">其他</option>
+        </select>
+
+        <input id="position" placeholder="目标职位，如行政助理/新媒体运营/后端开发工程师/数据分析师">
+
+        <select id="location">
+            <option value="">请选择目标省份/地区</option>
+            <option value="北京">北京</option>
+            <option value="天津">天津</option>
+            <option value="河北">河北</option>
+            <option value="山西">山西</option>
+            <option value="内蒙古">内蒙古</option>
+            <option value="辽宁">辽宁</option>
+            <option value="吉林">吉林</option>
+            <option value="黑龙江">黑龙江</option>
+            <option value="上海">上海</option>
+            <option value="江苏">江苏</option>
+            <option value="浙江">浙江</option>
+            <option value="安徽">安徽</option>
+            <option value="福建">福建</option>
+            <option value="江西">江西</option>
+            <option value="山东">山东</option>
+            <option value="河南">河南</option>
+            <option value="湖北">湖北</option>
+            <option value="湖南">湖南</option>
+            <option value="广东">广东</option>
+            <option value="广西">广西</option>
+            <option value="海南">海南</option>
+            <option value="重庆">重庆</option>
+            <option value="四川">四川</option>
+            <option value="贵州">贵州</option>
+            <option value="云南">云南</option>
+            <option value="西藏">西藏</option>
+            <option value="陕西">陕西</option>
+            <option value="甘肃">甘肃</option>
+            <option value="青海">青海</option>
+            <option value="宁夏">宁夏</option>
+            <option value="新疆">新疆</option>
+            <option value="香港">香港</option>
+            <option value="澳门">澳门</option>
+            <option value="台湾">台湾</option>
+            <option value="其他">其他</option>
+        </select>
+    </div>
+
+    <div class="section">
+        <h2>教育经历</h2>
+        <input id="school" placeholder="学校">
+        <input id="major" placeholder="专业">
+
+        <select id="degree">
+            <option value="">请选择学历</option>
+            <option value="大专">大专</option>
+            <option value="本科">本科</option>
+            <option value="硕士">硕士</option>
+            <option value="博士">博士</option>
+        </select>
+
+        <input id="duration" placeholder="时间，如2022.09-2026.06">
+        <textarea id="campus_experience" placeholder="在校经历，如社团、班委、奖惩、活动、竞赛等"></textarea>
+    </div>
+
+    <div class="section">
+        <h2>项目 / 活动 / 竞赛经历</h2>
+        <input id="project_name" placeholder="经历名称，如挑战杯比赛/学院辩论赛/校园活动策划/系统开发项目">
+        <input id="project_role" placeholder="你的角色，如负责人/成员/文案/后勤/开发者">
+        <textarea id="project_description" placeholder="经历描述，例如：负责活动签到、物资分发、场地布置和现场秩序维护"></textarea>
+    </div>
+
+    <div class="section">
+        <h2>实习 / 工作经历</h2>
+        <input id="intern_company" placeholder="公司/组织名称">
+        <input id="intern_role" placeholder="岗位名称">
+        <textarea id="intern_description" placeholder="实习或工作内容"></textarea>
+    </div>
+
+    <div class="section">
+        <h2>技能与自我评价</h2>
+        <input id="skills" placeholder="技能/证书，用逗号分隔，如普通话二甲, 英语四级, Excel, Python">
+        <textarea id="self_evaluation" placeholder="自我评价，可不填，系统会自动生成基础版本"></textarea>
+    </div>
+
+    <button onclick="generateResume()">生成简历</button>
+
+    <div id="result" style="display:none;"></div>
+
+    <script>
+        function calculateAge() {
+            const birthMonth = document.getElementById("birth_month").value;
+            const ageInput = document.getElementById("age");
+
+            if (!birthMonth) {
+                ageInput.value = "";
+                return;
+            }
+
+            const [birthYear, birthMonthNum] = birthMonth.split("-").map(Number);
+            const today = new Date();
+
+            let age = today.getFullYear() - birthYear;
+            const currentMonth = today.getMonth() + 1;
+
+            if (currentMonth < birthMonthNum) {
+                age--;
+            }
+
+            ageInput.value = age;
+        }
+
+        async function generateResume() {
+            const data = {
+                basic_info: {
+                    name: document.getElementById("name").value,
+                    gender: document.getElementById("gender").value,
+                    birth_month: document.getElementById("birth_month").value,
+                    age: document.getElementById("age").value,
+                    phone: document.getElementById("phone").value,
+                    email: document.getElementById("email").value
+                },
+                job_intention: {
+                    industry: document.getElementById("industry").value,
+                    position: document.getElementById("position").value,
+                    location: document.getElementById("location").value
+                },
+                education: {
+                    school: document.getElementById("school").value,
+                    major: document.getElementById("major").value,
+                    degree: document.getElementById("degree").value,
+                    duration: document.getElementById("duration").value,
+                    campus_experience: document.getElementById("campus_experience").value
+                },
+                projects: [
+                    {
+                        name: document.getElementById("project_name").value,
+                        role: document.getElementById("project_role").value,
+                        description: document.getElementById("project_description").value
+                    }
+                ],
+                internships: [
+                    {
+                        company: document.getElementById("intern_company").value,
+                        role: document.getElementById("intern_role").value,
+                        description: document.getElementById("intern_description").value
+                    }
+                ],
+                skills: document.getElementById("skills").value
+                    .split(",")
+                    .map(s => s.trim())
+                    .filter(Boolean),
+                self_evaluation: document.getElementById("self_evaluation").value
+            };
+
+            const response = await fetch("/generate_resume", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+            const resultDiv = document.getElementById("result");
+
+            if (result.success) {
+                resultDiv.innerText = result.resume_text;
+                resultDiv.style.display = "block";
+            } else {
+                resultDiv.innerText = "生成失败";
+                resultDiv.style.display = "block";
+            }
+        }
+    </script>
+</body>
+</html>
