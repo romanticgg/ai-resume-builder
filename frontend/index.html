@@ -7,7 +7,7 @@
     <style>
         body {
             font-family: Arial, "Microsoft YaHei", sans-serif;
-            max-width: 1000px;
+            max-width: 1100px;
             margin: 30px auto;
             padding: 20px;
             background: #f5f7fb;
@@ -52,18 +52,128 @@
             color: white;
             font-size: 16px;
             cursor: pointer;
+            margin: 6px 6px 6px 0;
         }
         button:hover {
             background: #1d4ed8;
         }
+        .btn-secondary {
+            background: #10b981;
+        }
+        .btn-secondary:hover {
+            background: #059669;
+        }
+        .btn-danger {
+            background: #ef4444;
+            font-size: 14px;
+            padding: 8px 14px;
+        }
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+        .dynamic-item {
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 14px;
+            margin-bottom: 14px;
+            background: #fafafa;
+        }
+        .dynamic-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #1f2937;
+        }
+        .actions {
+            text-align: center;
+            margin-bottom: 20px;
+        }
         #result {
-            white-space: pre-wrap;
+            display: none;
             background: white;
             padding: 20px;
             border-radius: 12px;
             margin-top: 20px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.06);
             line-height: 1.7;
+        }
+        #resumePreview {
+            display: none;
+            background: white;
+            max-width: 794px;
+            margin: 20px auto;
+            padding: 42px 48px;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.10);
+            color: #111827;
+            line-height: 1.65;
+        }
+        .resume-header {
+            text-align: center;
+            border-bottom: 2px solid #111827;
+            padding-bottom: 12px;
+            margin-bottom: 18px;
+        }
+        .resume-name {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .resume-contact {
+            font-size: 13px;
+            color: #374151;
+        }
+        .resume-section {
+            margin-top: 16px;
+        }
+        .resume-section-title {
+            font-size: 17px;
+            font-weight: 700;
+            border-bottom: 1px solid #d1d5db;
+            padding-bottom: 4px;
+            margin-bottom: 8px;
+            color: #111827;
+        }
+        .resume-item {
+            margin-bottom: 10px;
+        }
+        .resume-item-title {
+            font-weight: 700;
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        .resume-item-subtitle {
+            color: #374151;
+            font-size: 14px;
+            margin: 2px 0 4px;
+        }
+        .resume-content {
+            white-space: pre-line;
+            font-size: 14px;
+        }
+        .tag-list {
+            font-size: 14px;
+        }
+        @media print {
+            body {
+                background: white;
+                margin: 0;
+                padding: 0;
+            }
+            body > h1,
+            body > .section,
+            body > .actions,
+            #result {
+                display: none !important;
+            }
+            #resumePreview {
+                display: block !important;
+                box-shadow: none;
+                margin: 0;
+                max-width: none;
+            }
         }
     </style>
 </head>
@@ -169,16 +279,14 @@
 
     <div class="section">
         <h2>项目 / 活动 / 竞赛经历</h2>
-        <input id="project_name" placeholder="经历名称，如挑战杯比赛/学院辩论赛/校园活动策划/系统开发项目">
-        <input id="project_role" placeholder="你的角色，如负责人/成员/文案/后勤/开发者">
-        <textarea id="project_description" placeholder="经历描述，例如：负责活动签到、物资分发、场地布置和现场秩序维护"></textarea>
+        <div id="projectList"></div>
+        <button type="button" class="btn-secondary" onclick="addProject()">+ 添加项目经历</button>
     </div>
 
     <div class="section">
         <h2>实习 / 工作经历</h2>
-        <input id="intern_company" placeholder="公司/组织名称">
-        <input id="intern_role" placeholder="岗位名称">
-        <textarea id="intern_description" placeholder="实习或工作内容"></textarea>
+        <div id="internshipList"></div>
+        <button type="button" class="btn-secondary" onclick="addInternship()">+ 添加实习 / 工作经历</button>
     </div>
 
     <div class="section">
@@ -187,11 +295,24 @@
         <textarea id="self_evaluation" placeholder="自我评价，可不填，系统会自动生成基础版本"></textarea>
     </div>
 
-    <button onclick="generateResume()">生成简历</button>
+    <div class="actions">
+        <button onclick="generateResume()">生成简历</button>
+        <button onclick="downloadPDF()">导出PDF</button>
+    </div>
 
-    <div id="result" style="display:none;"></div>
+    <div id="result"></div>
+    <div id="resumePreview"></div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script>
+        let projectCount = 0;
+        let internshipCount = 0;
+
+        window.onload = function () {
+            addProject();
+            addInternship();
+        };
+
         function calculateAge() {
             const birthMonth = document.getElementById("birth_month").value;
             const ageInput = document.getElementById("age");
@@ -214,67 +335,292 @@
             ageInput.value = age;
         }
 
-        async function generateResume() {
-            const data = {
+        function addProject() {
+            projectCount++;
+            const projectList = document.getElementById("projectList");
+            const item = document.createElement("div");
+            item.className = "dynamic-item project-item";
+            item.innerHTML = `
+                <div class="dynamic-item-header">
+                    <span>项目经历 ${projectCount}</span>
+                    <button type="button" class="btn-danger" onclick="removeItem(this)">删除</button>
+                </div>
+                <input class="project-name" placeholder="经历名称，如挑战杯比赛/学院辩论赛/校园活动策划/系统开发项目">
+                <input class="project-role" placeholder="你的角色，如负责人/成员/文案/后勤/开发者">
+                <input class="project-time" placeholder="时间，如2025.03-2025.06">
+                <textarea class="project-description" placeholder="经历描述，例如：负责活动签到、物资分发、场地布置和现场秩序维护"></textarea>
+            `;
+            projectList.appendChild(item);
+        }
+
+        function addInternship() {
+            internshipCount++;
+            const internshipList = document.getElementById("internshipList");
+            const item = document.createElement("div");
+            item.className = "dynamic-item internship-item";
+            item.innerHTML = `
+                <div class="dynamic-item-header">
+                    <span>实习 / 工作经历 ${internshipCount}</span>
+                    <button type="button" class="btn-danger" onclick="removeItem(this)">删除</button>
+                </div>
+                <input class="intern-company" placeholder="公司/组织名称">
+                <input class="intern-role" placeholder="岗位名称">
+                <input class="intern-time" placeholder="时间，如2025.07-2025.09">
+                <textarea class="intern-description" placeholder="实习或工作内容"></textarea>
+            `;
+            internshipList.appendChild(item);
+        }
+
+        function removeItem(button) {
+            const item = button.closest(".dynamic-item");
+            item.remove();
+        }
+
+        function getValue(id) {
+            return document.getElementById(id).value.trim();
+        }
+
+        function escapeHtml(text) {
+            return String(text || "")
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        function collectProjects() {
+            return Array.from(document.querySelectorAll(".project-item"))
+                .map(item => ({
+                    name: item.querySelector(".project-name").value.trim(),
+                    role: item.querySelector(".project-role").value.trim(),
+                    time: item.querySelector(".project-time").value.trim(),
+                    description: item.querySelector(".project-description").value.trim()
+                }))
+                .filter(project => project.name || project.role || project.time || project.description);
+        }
+
+        function collectInternships() {
+            return Array.from(document.querySelectorAll(".internship-item"))
+                .map(item => ({
+                    company: item.querySelector(".intern-company").value.trim(),
+                    role: item.querySelector(".intern-role").value.trim(),
+                    time: item.querySelector(".intern-time").value.trim(),
+                    description: item.querySelector(".intern-description").value.trim()
+                }))
+                .filter(intern => intern.company || intern.role || intern.time || intern.description);
+        }
+
+        function collectFormData() {
+            return {
                 basic_info: {
-                    name: document.getElementById("name").value,
-                    gender: document.getElementById("gender").value,
-                    birth_month: document.getElementById("birth_month").value,
-                    age: document.getElementById("age").value,
-                    phone: document.getElementById("phone").value,
-                    email: document.getElementById("email").value
+                    name: getValue("name"),
+                    gender: getValue("gender"),
+                    birth_month: getValue("birth_month"),
+                    age: getValue("age"),
+                    phone: getValue("phone"),
+                    email: getValue("email")
                 },
                 job_intention: {
-                    industry: document.getElementById("industry").value,
-                    position: document.getElementById("position").value,
-                    location: document.getElementById("location").value
+                    industry: getValue("industry"),
+                    position: getValue("position"),
+                    location: getValue("location")
                 },
                 education: {
-                    school: document.getElementById("school").value,
-                    major: document.getElementById("major").value,
-                    degree: document.getElementById("degree").value,
-                    duration: document.getElementById("duration").value,
-                    campus_experience: document.getElementById("campus_experience").value
+                    school: getValue("school"),
+                    major: getValue("major"),
+                    degree: getValue("degree"),
+                    duration: getValue("duration"),
+                    campus_experience: getValue("campus_experience")
                 },
-                projects: [
-                    {
-                        name: document.getElementById("project_name").value,
-                        role: document.getElementById("project_role").value,
-                        description: document.getElementById("project_description").value
-                    }
-                ],
-                internships: [
-                    {
-                        company: document.getElementById("intern_company").value,
-                        role: document.getElementById("intern_role").value,
-                        description: document.getElementById("intern_description").value
-                    }
-                ],
-                skills: document.getElementById("skills").value
-                    .split(",")
+                projects: collectProjects(),
+                internships: collectInternships(),
+                skills: getValue("skills")
+                    .split(/[,，]/)
                     .map(s => s.trim())
                     .filter(Boolean),
-                self_evaluation: document.getElementById("self_evaluation").value
+                self_evaluation: getValue("self_evaluation")
             };
+        }
 
-            const response = await fetch("/generate_resume", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(data)
-            });
+        function buildTextResume(data) {
+            const basic = data.basic_info;
+            const job = data.job_intention;
+            const edu = data.education;
+            const selfEvaluation = data.self_evaluation || `本人学习能力较强，具备良好的沟通协调能力和责任心，能够快速适应岗位要求，愿意在${job.industry || "目标行业"}方向持续学习和发展。`;
 
-            const result = await response.json();
+            let text = `${basic.name || "未填写姓名"}\n`;
+            text += `${[basic.gender, basic.age ? basic.age + "岁" : "", basic.phone, basic.email].filter(Boolean).join(" | ")}\n\n`;
+            text += `求职意向：${[job.industry, job.position, job.location].filter(Boolean).join(" / ")}\n\n`;
+            text += `教育经历\n${edu.school || ""} ${edu.major || ""} ${edu.degree || ""} ${edu.duration || ""}\n${edu.campus_experience || ""}\n\n`;
+
+            if (data.projects.length) {
+                text += `项目 / 活动 / 竞赛经历\n`;
+                data.projects.forEach(p => {
+                    text += `${p.name || "未命名经历"} ${p.role ? " | " + p.role : ""} ${p.time ? " | " + p.time : ""}\n${p.description || ""}\n`;
+                });
+                text += `\n`;
+            }
+
+            if (data.internships.length) {
+                text += `实习 / 工作经历\n`;
+                data.internships.forEach(i => {
+                    text += `${i.company || "未填写公司"} ${i.role ? " | " + i.role : ""} ${i.time ? " | " + i.time : ""}\n${i.description || ""}\n`;
+                });
+                text += `\n`;
+            }
+
+            if (data.skills.length) {
+                text += `技能与证书\n${data.skills.join("、")}\n\n`;
+            }
+
+            text += `自我评价\n${selfEvaluation}`;
+            return text;
+        }
+
+        function renderResumePreview(data, aiText = "") {
+            const basic = data.basic_info;
+            const job = data.job_intention;
+            const edu = data.education;
+            const preview = document.getElementById("resumePreview");
+            const selfEvaluation = data.self_evaluation || `本人学习能力较强，具备良好的沟通协调能力和责任心，能够快速适应岗位要求，愿意在${job.industry || "目标行业"}方向持续学习和发展。`;
+
+            const contactLine = [
+                basic.gender,
+                basic.age ? basic.age + "岁" : "",
+                basic.phone,
+                basic.email,
+                job.position ? "求职意向：" + job.position : "",
+                job.location ? "期望地点：" + job.location : ""
+            ].filter(Boolean).join(" ｜ ");
+
+            const projectsHtml = data.projects.map(project => `
+                <div class="resume-item">
+                    <div class="resume-item-title">
+                        <span>${escapeHtml(project.name || "项目经历")}</span>
+                        <span>${escapeHtml(project.time || "")}</span>
+                    </div>
+                    <div class="resume-item-subtitle">${escapeHtml(project.role || "")}</div>
+                    <div class="resume-content">${escapeHtml(project.description || "")}</div>
+                </div>
+            `).join("");
+
+            const internshipsHtml = data.internships.map(intern => `
+                <div class="resume-item">
+                    <div class="resume-item-title">
+                        <span>${escapeHtml(intern.company || "实习 / 工作经历")}</span>
+                        <span>${escapeHtml(intern.time || "")}</span>
+                    </div>
+                    <div class="resume-item-subtitle">${escapeHtml(intern.role || "")}</div>
+                    <div class="resume-content">${escapeHtml(intern.description || "")}</div>
+                </div>
+            `).join("");
+
+            preview.innerHTML = `
+                <div class="resume-header">
+                    <div class="resume-name">${escapeHtml(basic.name || "姓名")}</div>
+                    <div class="resume-contact">${escapeHtml(contactLine)}</div>
+                </div>
+
+                <div class="resume-section">
+                    <div class="resume-section-title">求职意向</div>
+                    <div class="resume-content">${escapeHtml([job.industry, job.position, job.location].filter(Boolean).join(" / ") || "未填写")}</div>
+                </div>
+
+                <div class="resume-section">
+                    <div class="resume-section-title">教育经历</div>
+                    <div class="resume-item">
+                        <div class="resume-item-title">
+                            <span>${escapeHtml(edu.school || "学校")}</span>
+                            <span>${escapeHtml(edu.duration || "")}</span>
+                        </div>
+                        <div class="resume-item-subtitle">${escapeHtml([edu.major, edu.degree].filter(Boolean).join(" ｜ "))}</div>
+                        <div class="resume-content">${escapeHtml(edu.campus_experience || "")}</div>
+                    </div>
+                </div>
+
+                ${data.projects.length ? `
+                <div class="resume-section">
+                    <div class="resume-section-title">项目 / 活动 / 竞赛经历</div>
+                    ${projectsHtml}
+                </div>` : ""}
+
+                ${data.internships.length ? `
+                <div class="resume-section">
+                    <div class="resume-section-title">实习 / 工作经历</div>
+                    ${internshipsHtml}
+                </div>` : ""}
+
+                ${data.skills.length ? `
+                <div class="resume-section">
+                    <div class="resume-section-title">技能与证书</div>
+                    <div class="tag-list">${escapeHtml(data.skills.join("、"))}</div>
+                </div>` : ""}
+
+                <div class="resume-section">
+                    <div class="resume-section-title">自我评价</div>
+                    <div class="resume-content">${escapeHtml(selfEvaluation)}</div>
+                </div>
+
+                ${aiText ? `
+                <div class="resume-section">
+                    <div class="resume-section-title">AI 优化文本</div>
+                    <div class="resume-content">${escapeHtml(aiText)}</div>
+                </div>` : ""}
+            `;
+            preview.style.display = "block";
+        }
+
+        async function generateResume() {
+            const data = collectFormData();
             const resultDiv = document.getElementById("result");
+            let aiText = "";
 
-            if (result.success) {
-                resultDiv.innerText = result.resume_text;
-                resultDiv.style.display = "block";
-            } else {
-                resultDiv.innerText = "生成失败";
+            try {
+                const response = await fetch("/generate_resume", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    aiText = result.resume_text || "";
+                    resultDiv.innerText = aiText;
+                    resultDiv.style.display = "block";
+                } else {
+                    resultDiv.innerText = buildTextResume(data);
+                    resultDiv.style.display = "block";
+                }
+            } catch (error) {
+                resultDiv.innerText = buildTextResume(data);
                 resultDiv.style.display = "block";
             }
+
+            renderResumePreview(data, aiText);
+            document.getElementById("resumePreview").scrollIntoView({ behavior: "smooth" });
+        }
+
+        function downloadPDF() {
+            const element = document.getElementById("result");
+
+            if (!element.innerText.trim()) {
+                alert("请先生成简历再导出");
+                return;
+            }
+
+            const opt = {
+                margin:       10,
+                filename:     'resume.pdf',
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2 },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opt).from(element).save();
         }
     </script>
 </body>
